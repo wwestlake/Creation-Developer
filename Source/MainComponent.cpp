@@ -2,40 +2,38 @@
 
 #include "Branding.h"
 
+#include <creation/ui/SuiteAiChatPanel.h>
+
 MainComponent::MainComponent()
 {
     configureHeader();
 
-    titleLabel.setText("Creation Developer", juce::dontSendNotification);
-    titleLabel.setFont(juce::Font(32.0f, juce::Font::bold));
-    titleLabel.setColour(juce::Label::textColourId, juce::Colours::white);
-    addAndMakeVisible(titleLabel);
+    dockManager = std::make_unique<CreationDock::DockManager>(*this);
+    addAndMakeVisible(*dockManager);
 
-    subtitleLabel.setText("FRust development and Creation Suite plugin authoring, built on the shared Suite platform.",
-                          juce::dontSendNotification);
-    subtitleLabel.setColour(juce::Label::textColourId, juce::Colour(0xffc7d4cf));
-    addAndMakeVisible(subtitleLabel);
+    dockManager->registerPanel(
+        "frust-workspace",
+        "FRust Workspace",
+        makeSummaryPanel("The standalone FRust IDE remains the active editor during migration.\n\n"
+                         "Next: embed its project/editor services through an app-owned adapter, then expose FRust pod and tool actions inside this shell."),
+        CreationDock::DockTargetZone::CenterTab);
 
-    frustGroup.setText("FRust Workspace");
-    pluginGroup.setText("Suite Plugin Host");
-    communicationsGroup.setText("Suite Communications");
-    addAndMakeVisible(frustGroup);
-    addAndMakeVisible(pluginGroup);
-    addAndMakeVisible(communicationsGroup);
+    dockManager->registerPanel(
+        "suite-plugin-host",
+        "Suite Plugin Host",
+        makeSummaryPanel("Creation Developer is a first-order Suite plugin host.\n\n"
+                         "Next: consume the shared, versioned plugin-host SDK and expose extension points for panels, commands, templates, generators, formatters, and language tools."),
+        CreationDock::DockTargetZone::Left);
 
-    configureSummary(frustSummary);
-    configureSummary(pluginSummary);
-    configureSummary(communicationsSummary);
-    addAndMakeVisible(frustSummary);
-    addAndMakeVisible(pluginSummary);
-    addAndMakeVisible(communicationsSummary);
+    auto virtualEngineer = std::make_unique<creation::ui::SuiteAiChatPanel>();
+    virtualEngineer->RefreshConfiguredAccounts();
+    dockManager->registerPanel("virtual-engineer", "Virtual Engineer", std::move(virtualEngineer),
+                               CreationDock::DockTargetZone::Right);
 
-    frustSummary.setText("The standalone FRust IDE remains the active editor during migration.\n\n"
-                         "Next: embed its project/editor services through an app-owned adapter, then expose FRust pod and tool actions inside this shell.",
-                         juce::dontSendNotification);
-    pluginSummary.setText("Creation Developer will be a first-order Suite plugin host.\n\n"
-                          "Next: consume the shared, versioned plugin-host SDK and expose extension points for panels, commands, templates, generators, formatters, and language tools.",
-                          juce::dontSendNotification);
+    auto communicationsPanel = makeSummaryPanel();
+    communicationsSummary = communicationsPanel.get();
+    dockManager->registerPanel("suite-communications", "Suite Communications", std::move(communicationsPanel),
+                               CreationDock::DockTargetZone::Bottom);
 
     refreshSuiteCommunications();
     setSize(1380, 860);
@@ -75,7 +73,8 @@ void MainComponent::refreshSuiteCommunications()
     summary << "Resolved model: " << runtime.modelName << "\n";
     summary << "Suite VFS root: " << suiteSettings.suiteVfsRoot << "\n\n";
     summary << "Creation Developer uses the Suite's configured BYOK accounts and communications services. No separate provider or credential store is created here.";
-    communicationsSummary.setText(summary, juce::dontSendNotification);
+    if (communicationsSummary != nullptr)
+        communicationsSummary->setText(summary, juce::dontSendNotification);
 
     if (settingsError.isNotEmpty())
         headerBar.setStatusText("Suite settings: " + settingsError);
@@ -85,15 +84,18 @@ void MainComponent::refreshSuiteCommunications()
         headerBar.setStatusText("Shared Suite communications ready.");
 }
 
-void MainComponent::configureSummary(juce::TextEditor& editor)
+std::unique_ptr<juce::TextEditor> MainComponent::makeSummaryPanel(const juce::String& text)
 {
-    editor.setMultiLine(true);
-    editor.setReadOnly(true);
-    editor.setCaretVisible(false);
-    editor.setScrollbarsShown(true);
-    editor.setColour(juce::TextEditor::backgroundColourId, juce::Colour(0xff131d1b));
-    editor.setColour(juce::TextEditor::outlineColourId, juce::Colour(0xff3c514b));
-    editor.setColour(juce::TextEditor::textColourId, juce::Colour(0xffecf4ef));
+    auto editor = std::make_unique<juce::TextEditor>();
+    editor->setMultiLine(true);
+    editor->setReadOnly(true);
+    editor->setCaretVisible(false);
+    editor->setScrollbarsShown(true);
+    editor->setColour(juce::TextEditor::backgroundColourId, juce::Colour(0xff131d1b));
+    editor->setColour(juce::TextEditor::outlineColourId, juce::Colour(0xff3c514b));
+    editor->setColour(juce::TextEditor::textColourId, juce::Colour(0xffecf4ef));
+    editor->setText(text, juce::dontSendNotification);
+    return editor;
 }
 
 void MainComponent::paint(juce::Graphics& g)
@@ -109,22 +111,6 @@ void MainComponent::paint(juce::Graphics& g)
 void MainComponent::resized()
 {
     headerBar.setBounds(getLocalBounds().removeFromTop(96));
-    auto area = getLocalBounds().reduced(34, 28);
-    area.removeFromTop(88);
-    titleLabel.setBounds(area.removeFromTop(40));
-    subtitleLabel.setBounds(area.removeFromTop(28));
-    area.removeFromTop(18);
-
-    auto top = area.removeFromTop(area.getHeight() / 2);
-    auto left = top.removeFromLeft(top.getWidth() / 2);
-    left.removeFromRight(8);
-    top.removeFromLeft(8);
-    frustGroup.setBounds(left);
-    pluginGroup.setBounds(top);
-    communicationsGroup.setBounds(area);
-
-    frustSummary.setBounds(frustGroup.getBounds().reduced(14, 26));
-    pluginSummary.setBounds(pluginGroup.getBounds().reduced(14, 26));
-    communicationsSummary.setBounds(communicationsGroup.getBounds().reduced(14, 26));
+    if (dockManager != nullptr)
+        dockManager->setBounds(getLocalBounds().reduced(18));
 }
-

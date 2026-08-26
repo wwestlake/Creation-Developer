@@ -28,6 +28,9 @@ foreach(component VFS AssetSystem Services UI)
     endif()
 endforeach()
 
+add_subdirectory("${CREATION_SUITE_SHARED_DIR}/JuceDocking"
+                 "${CMAKE_CURRENT_BINARY_DIR}/CreationSuiteSharedJuceDocking")
+
 if(MSVC)
     # Shared static libraries compile in this app's build tree. /FS prevents
     # concurrent compiler processes from racing their target PDB files.
@@ -75,6 +78,7 @@ target_link_libraries(CreationDeveloperApp PRIVATE
     creation_suite_asset_system
     creation_suite_services
     creation_suite_ui
+    CreationDock
     juce::juce_gui_extra
     juce::juce_recommended_config_flags
     juce::juce_recommended_lto_flags
