@@ -1,6 +1,7 @@
 #include "MainComponent.h"
 
 #include "Branding.h"
+#include "TerminalPanel.h"
 
 #include <creation/ui/SuiteAiChatPanel.h>
 
@@ -33,6 +34,11 @@ MainComponent::MainComponent()
     auto communicationsPanel = makeSummaryPanel();
     communicationsSummary = communicationsPanel.get();
     dockManager->registerPanel("suite-communications", "Suite Communications", std::move(communicationsPanel),
+                               CreationDock::DockTargetZone::Bottom);
+
+    auto terminal = std::make_unique<TerminalPanel>();
+    terminal->getProjectRoot = [] { return juce::File::getCurrentWorkingDirectory(); };
+    dockManager->registerPanel("os-terminal", "OS Terminal", std::move(terminal),
                                CreationDock::DockTargetZone::Bottom);
 
     refreshSuiteCommunications();
