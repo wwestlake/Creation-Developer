@@ -1,6 +1,7 @@
 #include "MainComponent.h"
 
 #include "Branding.h"
+#include "ConsolePanel.h"
 #include "TerminalPanel.h"
 
 #include <creation/ui/SuiteAiChatPanel.h>
@@ -39,6 +40,11 @@ MainComponent::MainComponent()
     auto terminal = std::make_unique<TerminalPanel>();
     terminal->getProjectRoot = [] { return juce::File::getCurrentWorkingDirectory(); };
     dockManager->registerPanel("os-terminal", "OS Terminal", std::move(terminal),
+                               CreationDock::DockTargetZone::Bottom);
+
+    auto replConsole = std::make_unique<ConsolePanel>();
+    replConsole->getProjectRoot = [] { return juce::File::getCurrentWorkingDirectory(); };
+    dockManager->registerPanel("frust-repl", "FRust Terminal", std::move(replConsole),
                                CreationDock::DockTargetZone::Bottom);
 
     refreshSuiteCommunications();

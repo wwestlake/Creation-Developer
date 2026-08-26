@@ -17,6 +17,7 @@ if(MSVC)
 endif()
 
 set(CREATION_SUITE_SHARED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../shared" CACHE PATH "Path to the Creation Suite shared code root")
+set(FRUST_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/FrustLang" CACHE PATH "Path to the FRust compiler source")
 
 add_subdirectory("${JUCE_DIR}" juce)
 
@@ -30,6 +31,12 @@ endforeach()
 
 add_subdirectory("${CREATION_SUITE_SHARED_DIR}/JuceDocking"
                  "${CMAKE_CURRENT_BINARY_DIR}/CreationSuiteSharedJuceDocking")
+
+if(NOT EXISTS "${FRUST_SOURCE_DIR}/projects/01_language_paradigms/02_functional/CMakeLists.txt")
+    message(FATAL_ERROR "FRust source is required for Creation Developer. Initialize third_party/FrustLang.")
+endif()
+add_subdirectory("${FRUST_SOURCE_DIR}/projects/05_frate" "${CMAKE_CURRENT_BINARY_DIR}/FrustFrate")
+add_subdirectory("${FRUST_SOURCE_DIR}/projects/01_language_paradigms/02_functional" "${CMAKE_CURRENT_BINARY_DIR}/FrustCompiler")
 
 if(MSVC)
     # Shared static libraries compile in this app's build tree. /FS prevents
@@ -61,6 +68,8 @@ target_sources(CreationDeveloperApp PRIVATE
     Source/Main.cpp
     Source/MainComponent.cpp
     Source/MainComponent.h
+    Source/ConsolePanel.h
+    Source/ConsolePanel.cpp
     Source/TerminalPanel.h
     Source/TerminalPanel.cpp
     Source/TerminalInstance.h
@@ -87,6 +96,7 @@ target_link_libraries(CreationDeveloperApp PRIVATE
     creation_suite_services
     creation_suite_ui
     CreationDock
+    frust_lang
     juce::juce_gui_extra
     juce::juce_recommended_config_flags
     juce::juce_recommended_lto_flags

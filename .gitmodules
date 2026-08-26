@@ -1,0 +1,3 @@
+[submodule "third_party/FrustLang"]
+	path = third_party/FrustLang
+	url = https://github.com/wwestlake/FrustLang.git
