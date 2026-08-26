@@ -61,6 +61,14 @@ target_sources(CreationDeveloperApp PRIVATE
     Source/Main.cpp
     Source/MainComponent.cpp
     Source/MainComponent.h
+    Source/TerminalPanel.h
+    Source/TerminalPanel.cpp
+    Source/TerminalInstance.h
+    Source/TerminalInstance.cpp
+    Source/PersistentShellSession.h
+    Source/PersistentShellSession.cpp
+    Source/ShellTokeniser.h
+    Source/ShellTokeniser.cpp
 )
 
 target_compile_definitions(CreationDeveloperApp PRIVATE
