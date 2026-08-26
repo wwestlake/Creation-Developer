@@ -122,7 +122,8 @@ void MainComponent::paint(juce::Graphics& g)
 
 void MainComponent::resized()
 {
-    headerBar.setBounds(getLocalBounds().removeFromTop(96));
+    auto contentArea = getLocalBounds();
+    headerBar.setBounds(contentArea.removeFromTop(96));
     if (dockManager != nullptr)
-        dockManager->setBounds(getLocalBounds().reduced(18));
+        dockManager->setBounds(contentArea.reduced(18));
 }
