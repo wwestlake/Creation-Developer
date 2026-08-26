@@ -29,13 +29,23 @@ bool PersistentShellSession::start(const juce::String& shell, const juce::File& 
     startup.hStdOutput = outputWrite;
     startup.hStdError = outputWrite;
     PROCESS_INFORMATION process {};
-    const auto executable = shell == "bash" ? L"wsl.exe" : L"powershell.exe";
-    juce::String command = shell == "bash" ? "wsl.exe -- bash -i" : "powershell.exe -NoLogo -NoProfile -NoExit";
+    const auto systemDirectory = juce::File::getSpecialLocation(juce::File::windowsSystemDirectory);
+    const auto executable = shell == "bash"
+        ? systemDirectory.getChildFile("wsl.exe").getFullPathName()
+        : systemDirectory.getChildFile("WindowsPowerShell")
+              .getChildFile("v1.0")
+              .getChildFile("powershell.exe")
+              .getFullPathName();
+    // A GUI host has no console for PowerShell's normal interactive mode.
+    // Read each line from our redirected stdin explicitly and evaluate it in
+    // one long-lived process, preserving PowerShell variables and location.
+    juce::String command = shell == "bash" ? "wsl.exe -- bash -i"
+        : "powershell.exe -NoLogo -NoProfile -Command \"while ($true) { $line = [Console]::In.ReadLine(); if ($null -eq $line) { break }; $result = Invoke-Expression $line 2>&1 | Out-String; [Console]::Out.Write($result); [Console]::Out.Write([char]30 + 'FRUST_TERMINAL_DONE' + [char]30); [Console]::Out.Flush() }\"";
     std::vector<wchar_t> mutableCommand(command.toWideCharPointer(), command.toWideCharPointer() + command.length() + 1);
-    const auto directory = workingDirectory.getFullPathName().toWideCharPointer();
-    if (!CreateProcessW(executable, mutableCommand.data(), nullptr, nullptr, TRUE, CREATE_NO_WINDOW,
-                        nullptr, directory, &startup, &process)) {
-        error = "Could not start " + shell + ".";
+    const auto directory = workingDirectory.getFullPathName();
+    if (!CreateProcessW(executable.toWideCharPointer(), mutableCommand.data(), nullptr, nullptr, TRUE, CREATE_NO_WINDOW,
+                        nullptr, directory.toWideCharPointer(), &startup, &process)) {
+        error = "Could not start " + shell + " (Windows error " + juce::String(static_cast<int>(GetLastError())) + ").";
         CloseHandle(outputRead); CloseHandle(outputWrite); CloseHandle(inputRead); CloseHandle(inputWrite);
         return false;
     }
