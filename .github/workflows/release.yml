@@ -1,0 +1,74 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "creation-developer-v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    runs-on: windows-latest
+    defaults:
+      run:
+        working-directory: apps/CreationDeveloper
+
+    steps:
+      - name: Checkout Creation Suite umbrella
+        uses: actions/checkout@v4
+        with:
+          repository: wwestlake/Creation-Suite
+          ref: master
+
+      - name: Checkout Creation Developer at the release tag
+        uses: actions/checkout@v4
+        with:
+          path: apps/CreationDeveloper
+
+      - name: Fetch JUCE
+        shell: pwsh
+        run: git clone --depth 1 --branch 8.0.7 https://github.com/juce-framework/JUCE.git "$env:RUNNER_TEMP\JUCE"
+
+      - name: Classify release
+        id: classify
+        shell: pwsh
+        run: |
+          $tag = $env:GITHUB_REF_NAME
+          if ($tag -notmatch '^creation-developer-v(?<version>\d+\.\d+\.\d+)$') {
+            throw "Tag '$tag' must use creation-developer-vMAJOR.MINOR.PATCH."
+          }
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "tag=$tag"
+          Add-Content -Path $env:GITHUB_OUTPUT -Value "version=$($Matches.version)"
+
+      - name: Configure CMake
+        shell: pwsh
+        run: cmake -S . -B build -A x64 -DCMAKE_BUILD_TYPE=Release -DJUCE_DIR="$env:RUNNER_TEMP\JUCE" "-DCREATION_DEVELOPER_VERSION=${{ steps.classify.outputs.version }}"
+
+      - name: Build app
+        shell: pwsh
+        run: cmake --build build --config Release --target CreationDeveloperApp -- /m:1
+
+      - name: Stage release assets
+        shell: pwsh
+        run: |
+          $artifacts = Join-Path $PWD "artifacts"
+          $stage = Join-Path $artifacts "CreationDeveloper"
+          New-Item -ItemType Directory -Force -Path $stage | Out-Null
+          cmake --install build --config Release --prefix $stage --component CreationDeveloper
+          $zip = Join-Path $artifacts "${{ steps.classify.outputs.tag }}.zip"
+          Compress-Archive -Path (Join-Path $stage "*") -DestinationPath $zip -Force
+
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: creation-developer
+          path: apps/CreationDeveloper/artifacts/*
+
+      - name: Publish GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Creation Developer ${{ steps.classify.outputs.version }} (alpha)
+          prerelease: true
+          files: apps/CreationDeveloper/artifacts/*

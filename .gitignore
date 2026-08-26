@@ -1,0 +1,4 @@
+build/
+artifacts/
+.vs/
+build-debug.log
