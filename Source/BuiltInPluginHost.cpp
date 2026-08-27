@@ -49,11 +49,16 @@ bool BuiltInPluginHost::load(juce::String& error)
 
 bool BuiltInPluginHost::processCommand(const juce::String& input, juce::String& output)
 {
-    const auto words = juce::StringArray::fromTokens(input.trim(), " ", "");
-    if (words.isEmpty() || words[0] != "frate")
+    auto command = input.trim();
+    if (command.startsWithIgnoreCase("fr->"))
+        command = command.substring(4).trimStart();
+
+    const auto words = juce::StringArray::fromTokens(command, " \t\r\n", "");
+    if (words.isEmpty() || ! words[0].equalsIgnoreCase("frate"))
         return false;
 
-    if (words.size() != 3 && words.size() != 5 || words[1] != "new" || (words.size() == 5 && words[3] != "--for"))
+    if ((words.size() != 3 && words.size() != 5) || ! words[1].equalsIgnoreCase("new")
+        || (words.size() == 5 && words[3] != "--for"))
     {
         output = "Suite FRust terminal supports: frate new <plugin-pod-name> [--for suite|station|engine|movie|live|texture|modeler|developer]";
         return true;

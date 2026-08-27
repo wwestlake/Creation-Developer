@@ -84,8 +84,17 @@ void ConsolePanel::evaluateInput()
 
     juce::String output;
     if (input.isNotEmpty()) {
+        const auto firstToken = juce::StringArray::fromTokens(input, " \t\r\n", "");
+        const auto isSuiteCommand = ! firstToken.isEmpty()
+            && firstToken[0].equalsIgnoreCase("frate");
+
         if (processHostedCommand && processHostedCommand(input, output)) {
             consoleText.setText(fullText + "\n  => " + output + "\n" + promptText);
+            consoleText.moveCaretToEnd();
+            return;
+        }
+        if (isSuiteCommand) {
+            consoleText.setText(fullText + "\n  => The Suite frate command handler is unavailable.\n" + promptText);
             consoleText.moveCaretToEnd();
             return;
         }
