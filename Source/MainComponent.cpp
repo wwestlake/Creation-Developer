@@ -2,9 +2,11 @@
 
 #include "Branding.h"
 #include "ConsolePanel.h"
+#include "FrateTerminalPanel.h"
 #include "TerminalPanel.h"
 
 #include <creation/ui/SuiteAiChatPanel.h>
+#include <creation/services/SuiteVfsJsonStore.h>
 
 MainComponent::MainComponent()
 {
@@ -47,7 +49,21 @@ MainComponent::MainComponent()
     dockManager->registerPanel("frust-repl", "FRust Terminal", std::move(replConsole),
                                CreationDock::DockTargetZone::Bottom);
 
+    auto frateTerminal = std::make_unique<FrateTerminalPanel>();
+    frateTerminal->processFrateAction = [this](const juce::String& input, juce::String& output)
+    {
+        return builtInPluginHost.processFrateCommand(input, output);
+    };
+    frateTerminal->listProjectEntries = [this] { return pluginPodWorkspace.getSession().listEntryPaths(); };
+    dockManager->registerPanel("frate-terminal", "Frate Terminal", std::move(frateTerminal),
+                               CreationDock::DockTargetZone::Bottom);
+
+    juce::String pluginError;
+    if (! builtInPluginHost.load(pluginError))
+        headerBar.setStatusText("Built-in plugin commands unavailable: " + pluginError);
+
     refreshSuiteCommunications();
+    restoreActiveProject();
     setSize(1380, 860);
 }
 
@@ -57,17 +73,49 @@ void MainComponent::configureHeader()
 {
     headerBar.setAppTitle("Creation Developer");
     headerBar.setAppLogo(creation::ui::SuiteLogoId::suite);
-    headerBar.setProjectLabel("Developer shell: ready");
+    headerBar.setProjectLabel("Project: None");
     headerBar.setTransportControlsVisible(false);
     headerBar.audioButton.setButtonText("Refresh");
     headerBar.tourButton.setButtonText("EULA");
     headerBar.onAudioRequested = [this] { refreshSuiteCommunications(); };
     headerBar.onTourRequested = [this] { suiteShellController.showSuiteEula(); };
     suiteShellController.attach(headerBar,
-                                { "Creation Developer", creation::assets::SuiteAppDomain::unknown,
+                                { "Creation Developer", creation::assets::SuiteAppDomain::developer,
                                   creation_developer::branding::backgroundColour() },
                                 [this](const juce::String& status) { headerBar.setStatusText(status); });
+    suiteShellController.onProjectOpenRequested = [this](const juce::String& projectId)
+    {
+        openActiveProject(projectId);
+    };
     addAndMakeVisible(headerBar);
+}
+
+void MainComponent::openActiveProject(const juce::String& projectId)
+{
+    const auto& projectSession = suiteShellController.getActiveProjectSession();
+    if (! projectSession.isValid() || projectSession.getProjectId() != projectId)
+    {
+        headerBar.setProjectLabel("Project: None");
+        headerBar.setStatusText("The shared Project Manager did not provide an active project session.");
+        return;
+    }
+
+    pluginPodWorkspace.useProject(projectSession);
+    headerBar.setProjectLabel("Project: " + pluginPodWorkspace.getSession().getManifest().projectName);
+    headerBar.setStatusText("Opened project " + pluginPodWorkspace.getSession().getManifest().projectName + ".");
+    auto* state = new juce::DynamicObject();
+    state->setProperty("lastOpenedProjectId", projectId);
+    juce::String saveError;
+    creation::services::SuiteVfsJsonStore::saveJson("creation-developer-settings.json", juce::var(state), saveError);
+}
+
+void MainComponent::restoreActiveProject()
+{
+    juce::String loadError;
+    const auto state = creation::services::SuiteVfsJsonStore::loadJson("creation-developer-settings.json", loadError);
+    if (const auto* settings = state.getDynamicObject())
+        if (const auto projectId = settings->getProperty("lastOpenedProjectId").toString(); projectId.isNotEmpty())
+            suiteShellController.openProject(projectId);
 }
 
 void MainComponent::refreshSuiteCommunications()
@@ -77,7 +125,7 @@ void MainComponent::refreshSuiteCommunications()
     juce::String aiError;
     const auto aiSettings = suiteAiSettingsStore.load(aiError);
     const auto runtime = creation::services::SuiteAiSettingsResolver::resolveRuntimeSettingsForApp(
-        aiSettings, creation::assets::SuiteAppDomain::unknown);
+        aiSettings, creation::assets::SuiteAppDomain::developer);
 
     juce::String summary;
     summary << "Shared AI accounts: " << aiSettings.accounts.size() << "\n";

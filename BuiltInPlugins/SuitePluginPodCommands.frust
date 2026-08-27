@@ -1,0 +1,7 @@
+manifest "{\"name\":\"suite_plugin_pod_commands\",\"version\":\"0.1.0\",\"description\":\"Creates VFS-backed Creation Suite plugin pods.\",\"entryPoints\":[\"frate_new_plugin\"],\"requiredHostFunctions\":[{\"name\":\"suite_create_plugin_pod\"}],\"intendedApplications\":[\"creation-developer\"]}";
+
+extern fn suite_create_plugin_pod(name: String, target: String) -> i64;
+
+pub fn frate_new_plugin(name: String, target: String) -> i64 = {
+    suite_create_plugin_pod(name, target)
+}

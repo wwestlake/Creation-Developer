@@ -37,6 +37,7 @@ if(NOT EXISTS "${FRUST_SOURCE_DIR}/projects/01_language_paradigms/02_functional/
 endif()
 add_subdirectory("${FRUST_SOURCE_DIR}/projects/05_frate" "${CMAKE_CURRENT_BINARY_DIR}/FrustFrate")
 add_subdirectory("${FRUST_SOURCE_DIR}/projects/01_language_paradigms/02_functional" "${CMAKE_CURRENT_BINARY_DIR}/FrustCompiler")
+add_subdirectory("${FRUST_SOURCE_DIR}/projects/09_frust_plugin_host" "${CMAKE_CURRENT_BINARY_DIR}/FrustPluginHost")
 
 if(MSVC)
     # Shared static libraries compile in this app's build tree. /FS prevents
@@ -56,8 +57,12 @@ juce_add_gui_app(CreationDeveloperApp
 )
 
 add_custom_command(TARGET CreationDeveloperApp POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:CreationDeveloperApp>/plugins"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/BuiltInPlugins/SuitePluginPodCommands.frust" "$<TARGET_FILE_DIR:CreationDeveloperApp>/plugins/"
     COMMAND ${CMAKE_COMMAND} -E make_directory "D:/CreationSuite-Workspaces/codex-$<LOWER_CASE:$<CONFIG>>-bin"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:CreationDeveloperApp>" "D:/CreationSuite-Workspaces/codex-$<LOWER_CASE:$<CONFIG>>-bin/"
+    COMMAND ${CMAKE_COMMAND} -E make_directory "D:/CreationSuite-Workspaces/codex-$<LOWER_CASE:$<CONFIG>>-bin/plugins"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/BuiltInPlugins/SuitePluginPodCommands.frust" "D:/CreationSuite-Workspaces/codex-$<LOWER_CASE:$<CONFIG>>-bin/plugins/"
     COMMENT "Copying CreationDeveloperApp to the shared Codex bin directory"
 )
 juce_generate_juce_header(CreationDeveloperApp)
@@ -70,6 +75,8 @@ target_sources(CreationDeveloperApp PRIVATE
     Source/MainComponent.h
     Source/ConsolePanel.h
     Source/ConsolePanel.cpp
+    Source/FrateTerminalPanel.h
+    Source/FrateTerminalPanel.cpp
     Source/TerminalPanel.h
     Source/TerminalPanel.cpp
     Source/TerminalInstance.h
@@ -78,6 +85,10 @@ target_sources(CreationDeveloperApp PRIVATE
     Source/PersistentShellSession.cpp
     Source/ShellTokeniser.h
     Source/ShellTokeniser.cpp
+    Source/PluginPodWorkspace.h
+    Source/PluginPodWorkspace.cpp
+    Source/BuiltInPluginHost.h
+    Source/BuiltInPluginHost.cpp
 )
 
 target_compile_definitions(CreationDeveloperApp PRIVATE
@@ -97,6 +108,7 @@ target_link_libraries(CreationDeveloperApp PRIVATE
     creation_suite_ui
     CreationDock
     frust_lang
+    frust_plugin_host
     juce::juce_gui_extra
     juce::juce_recommended_config_flags
     juce::juce_recommended_lto_flags
@@ -104,6 +116,7 @@ target_link_libraries(CreationDeveloperApp PRIVATE
 )
 
 install(TARGETS CreationDeveloperApp RUNTIME DESTINATION . COMPONENT CreationDeveloper)
+install(FILES BuiltInPlugins/SuitePluginPodCommands.frust DESTINATION plugins COMPONENT CreationDeveloper)
 
 set(CPACK_PACKAGE_NAME "Creation Developer")
 set(CPACK_PACKAGE_VENDOR "LagDaemon Software")
