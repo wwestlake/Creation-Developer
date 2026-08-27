@@ -47,18 +47,14 @@ bool BuiltInPluginHost::load(juce::String& error)
     return true;
 }
 
-bool BuiltInPluginHost::processCommand(const juce::String& input, juce::String& output)
+bool BuiltInPluginHost::processFrateCommand(const juce::String& input, juce::String& output)
 {
-    auto command = input.trim();
-    if (command.startsWithIgnoreCase("fr->"))
-        command = command.substring(4).trimStart();
-
-    const auto words = juce::StringArray::fromTokens(command, " \t\r\n", "");
-    if (words.isEmpty() || ! words[0].equalsIgnoreCase("frate"))
+    const auto words = juce::StringArray::fromTokens(input.trim(), " \t\r\n", "");
+    if (words.isEmpty())
         return false;
 
-    if ((words.size() != 3 && words.size() != 5) || ! words[1].equalsIgnoreCase("new")
-        || (words.size() == 5 && words[3] != "--for"))
+    if ((words.size() != 2 && words.size() != 4) || ! words[0].equalsIgnoreCase("new")
+        || (words.size() == 4 && words[2] != "--for"))
     {
         output = "Suite FRust terminal supports: frate new <plugin-pod-name> [--for suite|station|engine|movie|live|texture|modeler|developer]";
         return true;
@@ -77,7 +73,7 @@ bool BuiltInPluginHost::processCommand(const juce::String& input, juce::String& 
         return true;
     }
 
-    createPod(words[2].toRawUTF8(), words.size() == 5 ? words[4].toRawUTF8() : "suite");
+    createPod(words[1].toRawUTF8(), words.size() == 4 ? words[3].toRawUTF8() : "suite");
     output = workspace.getLastStatus();
     return true;
 }

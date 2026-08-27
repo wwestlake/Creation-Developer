@@ -2,6 +2,7 @@
 
 #include "Branding.h"
 #include "ConsolePanel.h"
+#include "FrateTerminalPanel.h"
 #include "TerminalPanel.h"
 
 #include <creation/ui/SuiteAiChatPanel.h>
@@ -45,11 +46,16 @@ MainComponent::MainComponent()
 
     auto replConsole = std::make_unique<ConsolePanel>();
     replConsole->getProjectRoot = [] { return juce::File::getCurrentWorkingDirectory(); };
-    replConsole->processHostedCommand = [this](const juce::String& input, juce::String& output)
-    {
-        return builtInPluginHost.processCommand(input, output);
-    };
     dockManager->registerPanel("frust-repl", "FRust Terminal", std::move(replConsole),
+                               CreationDock::DockTargetZone::Bottom);
+
+    auto frateTerminal = std::make_unique<FrateTerminalPanel>();
+    frateTerminal->processFrateAction = [this](const juce::String& input, juce::String& output)
+    {
+        return builtInPluginHost.processFrateCommand(input, output);
+    };
+    frateTerminal->listProjectEntries = [this] { return pluginPodWorkspace.getSession().listEntryPaths(); };
+    dockManager->registerPanel("frate-terminal", "Frate Terminal", std::move(frateTerminal),
                                CreationDock::DockTargetZone::Bottom);
 
     juce::String pluginError;

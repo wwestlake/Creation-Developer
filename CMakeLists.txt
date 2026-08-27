@@ -75,6 +75,8 @@ target_sources(CreationDeveloperApp PRIVATE
     Source/MainComponent.h
     Source/ConsolePanel.h
     Source/ConsolePanel.cpp
+    Source/FrateTerminalPanel.h
+    Source/FrateTerminalPanel.cpp
     Source/TerminalPanel.h
     Source/TerminalPanel.cpp
     Source/TerminalInstance.h

@@ -11,7 +11,7 @@ public:
     ~BuiltInPluginHost();
 
     bool load(juce::String& error);
-    bool processCommand(const juce::String& input, juce::String& output);
+    bool processFrateCommand(const juce::String& input, juce::String& output);
 
 private:
     PluginPodWorkspace& workspace;
