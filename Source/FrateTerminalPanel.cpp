@@ -102,7 +102,11 @@ void FrateTerminalPanel::submit()
     if (command.isEmpty()) return;
     appendOutput("frate> " + command);
 
-    const auto words = juce::StringArray::fromTokens(command, " \t\r\n", "");
+    auto normalizedCommand = command;
+    if (normalizedCommand.startsWithIgnoreCase("frate "))
+        normalizedCommand = normalizedCommand.substring(6).trimStart();
+
+    const auto words = juce::StringArray::fromTokens(normalizedCommand, " \t\r\n", "");
     if (words.isEmpty()) return;
     const auto verb = words[0].toLowerCase();
     if (verb == "help")
@@ -129,7 +133,7 @@ void FrateTerminalPanel::submit()
     else if (processFrateAction)
     {
         juce::String output;
-        if (processFrateAction(command, output)) appendOutput(output);
+        if (processFrateAction(normalizedCommand, output)) appendOutput(output);
         else appendOutput("Unknown command. Type 'help' for commands.");
     }
     else

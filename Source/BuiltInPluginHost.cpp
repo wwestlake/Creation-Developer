@@ -49,9 +49,12 @@ bool BuiltInPluginHost::load(juce::String& error)
 
 bool BuiltInPluginHost::processFrateCommand(const juce::String& input, juce::String& output)
 {
-    const auto words = juce::StringArray::fromTokens(input.trim(), " \t\r\n", "");
+    auto words = juce::StringArray::fromTokens(input.trim(), " \t\r\n", "");
     if (words.isEmpty())
         return false;
+
+    if (words.size() >= 2 && words[0].equalsIgnoreCase("new") && words[1].equalsIgnoreCase("pod"))
+        words.remove(1);
 
     if ((words.size() != 2 && words.size() != 4) || ! words[0].equalsIgnoreCase("new")
         || (words.size() == 4 && words[2] != "--for"))
