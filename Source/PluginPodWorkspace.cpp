@@ -14,18 +14,10 @@ juce::MemoryBlock asData(const juce::String& text)
 }
 }
 
-bool PluginPodWorkspace::openProject(const juce::String& projectId)
+void PluginPodWorkspace::useProject(const creation::assets::ProjectSession& projectSession)
 {
-    juce::String error;
-    settings = settingsStore.load(error);
-    if (! creation::assets::ProjectWorkspaceService::openProject(settings, projectId, session, error))
-    {
-        lastStatus = "Could not open the VFS project: " + error;
-        return false;
-    }
-
+    session = projectSession;
     lastStatus = "Opened VFS project " + session.getManifest().projectName + ".";
-    return true;
 }
 
 bool PluginPodWorkspace::writeTextEntry(const juce::String& logicalPath, const juce::String& text)

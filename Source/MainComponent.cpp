@@ -86,13 +86,15 @@ void MainComponent::configureHeader()
 
 void MainComponent::openActiveProject(const juce::String& projectId)
 {
-    if (! pluginPodWorkspace.openProject(projectId))
+    const auto& projectSession = suiteShellController.getActiveProjectSession();
+    if (! projectSession.isValid() || projectSession.getProjectId() != projectId)
     {
         headerBar.setProjectLabel("Project: None");
-        headerBar.setStatusText(pluginPodWorkspace.getLastStatus());
+        headerBar.setStatusText("The shared Project Manager did not provide an active project session.");
         return;
     }
 
+    pluginPodWorkspace.useProject(projectSession);
     headerBar.setProjectLabel("Project: " + pluginPodWorkspace.getSession().getManifest().projectName);
     headerBar.setStatusText("Opened project " + pluginPodWorkspace.getSession().getManifest().projectName + ".");
     auto* state = new juce::DynamicObject();
@@ -107,7 +109,7 @@ void MainComponent::restoreActiveProject()
     const auto state = creation::services::SuiteVfsJsonStore::loadJson("creation-developer-settings.json", loadError);
     if (const auto* settings = state.getDynamicObject())
         if (const auto projectId = settings->getProperty("lastOpenedProjectId").toString(); projectId.isNotEmpty())
-            openActiveProject(projectId);
+            suiteShellController.openProject(projectId);
 }
 
 void MainComponent::refreshSuiteCommunications()

@@ -6,7 +6,7 @@
 class PluginPodWorkspace final
 {
 public:
-    bool openProject(const juce::String& projectId);
+    void useProject(const creation::assets::ProjectSession& projectSession);
     bool createPluginPod(const juce::String& podName, const juce::String& targetApplication);
 
     const creation::assets::ProjectSession& getSession() const noexcept { return session; }
