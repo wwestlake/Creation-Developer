@@ -8,6 +8,8 @@
 #include <creation/ui/SuiteShellController.h>
 #include <CreationDock/DockManager.h>
 
+#include "BuiltInPluginHost.h"
+
 class MainComponent final : public juce::Component
 {
 public:
@@ -20,12 +22,16 @@ public:
 private:
     void configureHeader();
     void refreshSuiteCommunications();
+    void openActiveProject(const juce::String& projectId);
+    void restoreActiveProject();
     static std::unique_ptr<juce::TextEditor> makeSummaryPanel(const juce::String& text = {});
 
     CreationSuiteHeaderBar headerBar;
     creation::ui::SuiteShellController suiteShellController;
     creation::suite::SuiteSettingsStore suiteSettingsStore;
     creation::services::SuiteAiSettingsStore suiteAiSettingsStore;
+    PluginPodWorkspace pluginPodWorkspace;
+    BuiltInPluginHost builtInPluginHost { pluginPodWorkspace };
 
     std::unique_ptr<CreationDock::DockManager> dockManager;
     juce::TextEditor* communicationsSummary = nullptr;

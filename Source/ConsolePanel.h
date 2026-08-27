@@ -5,7 +5,7 @@
 #include <functional>
 #include <memory>
 
-class ConsolePanel : public juce::Component
+class ConsolePanel : public juce::Component, private juce::KeyListener
 {
 public:
     ConsolePanel();
@@ -30,6 +30,7 @@ public:
     // instead of some fixed app-data path. Unset (or returning an invalid
     // File) falls back to the user's documents folder.
     std::function<juce::File()> getProjectRoot;
+    std::function<bool(const juce::String& input, juce::String& output)> processHostedCommand;
 
     // For a companion panel (e.g. ContextPanel) to read the live session's
     // bound variables - this owns the one real ReplSession instance, other
@@ -45,6 +46,7 @@ private:
     void resetSession();
     void saveSessionToFile();
     void loadSessionFromFile();
+    bool keyPressed(const juce::KeyPress& key, juce::Component* source) override;
     juce::File getSessionFile() const;
 
     juce::Label headerLabel { "Header", "Output & REPL Console" };

@@ -25,6 +25,7 @@ ConsolePanel::ConsolePanel()
     consoleText.setColour(juce::TextEditor::focusedOutlineColourId, juce::Colours::transparentBlack);
     consoleText.setText(bannerText + promptText);
     consoleText.onReturnKey = [this] { evaluateInput(); };
+    consoleText.addKeyListener(this);
     addAndMakeVisible(consoleText);
 
     clearButton.onClick = [this] { clearConsole(); };
@@ -40,7 +41,10 @@ ConsolePanel::ConsolePanel()
     addAndMakeVisible(loadButton);
 }
 
-ConsolePanel::~ConsolePanel() = default;
+ConsolePanel::~ConsolePanel()
+{
+    consoleText.removeKeyListener(this);
+}
 
 void ConsolePanel::paint(juce::Graphics& g)
 {
@@ -80,6 +84,11 @@ void ConsolePanel::evaluateInput()
 
     juce::String output;
     if (input.isNotEmpty()) {
+        if (processHostedCommand && processHostedCommand(input, output)) {
+            consoleText.setText(fullText + "\n  => " + output + "\n" + promptText);
+            consoleText.moveCaretToEnd();
+            return;
+        }
         // JIT-compiling and running is fast (microseconds for expressions
         // this small) but still real work - do it synchronously for now
         // rather than adding a background-thread/callback path before
@@ -91,6 +100,17 @@ void ConsolePanel::evaluateInput()
 
     consoleText.setText(fullText + output + "\n" + promptText);
     consoleText.moveCaretToEnd();
+}
+
+bool ConsolePanel::keyPressed(const juce::KeyPress& key, juce::Component*)
+{
+    if (key == juce::KeyPress::returnKey)
+    {
+        evaluateInput();
+        return true;
+    }
+
+    return false;
 }
 
 void ConsolePanel::runScript(const juce::String& source, const juce::String& label)
