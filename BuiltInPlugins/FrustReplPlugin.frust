@@ -1,0 +1,49 @@
+manifest "{\"name\":\"frust_repl\",\"version\":\"0.1.0\",\"description\":\"The Creation Developer FRust REPL command plugin.\",\"entryPoints\":[\"frust_repl_banner\",\"frust_repl_prompt\",\"frust_repl_submit\",\"frust_repl_help\"],\"requiredHostFunctions\":[{\"name\":\"suite_repl_evaluate\"},{\"name\":\"suite_repl_reset\"},{\"name\":\"suite_repl_save\"},{\"name\":\"suite_repl_load\"},{\"name\":\"suite_repl_clear\"},{\"name\":\"suite_repl_help\"}],\"intendedApplications\":[\"creation-developer\"]}";
+
+extern fn strcmp(left: String, right: String) -> i32;
+extern fn strncmp(left: String, right: String, count: i64) -> i32;
+extern fn suite_repl_evaluate(source: String) -> String;
+extern fn suite_repl_reset() -> String;
+extern fn suite_repl_save() -> String;
+extern fn suite_repl_load() -> String;
+extern fn suite_repl_clear() -> i64;
+extern fn suite_repl_help(command: String) -> String;
+
+fn equals(left: String, right: String) -> bool = {
+    strcmp(left, right) == 0
+}
+
+pub fn frust_repl_banner() -> String = {
+    "FRust Interactive\nReady. Type @help for REPL commands.\n"
+}
+
+pub fn frust_repl_prompt() -> String = {
+    "fr-> "
+}
+
+fn begins_plugin_help(input: String) -> bool = {
+    strncmp(input, "@help ", 6) == 0
+}
+
+pub fn frust_repl_help() -> String = {
+    "FRust Interactive owns the live FRust session. Use @help to list REPL-aware plugins, or @help <plugin> to request help from one."
+}
+
+pub fn frust_repl_submit(input: String) -> String = {
+    if (equals(input, "@help")) {
+        suite_repl_help(input)
+    } else if (begins_plugin_help(input)) {
+        suite_repl_help(input)
+    } else if (equals(input, "@clear")) {
+        suite_repl_clear();
+        ""
+    } else if (equals(input, "@reset")) {
+        suite_repl_reset()
+    } else if (equals(input, "@save")) {
+        suite_repl_save()
+    } else if (equals(input, "@load")) {
+        suite_repl_load()
+    } else {
+        suite_repl_evaluate(input)
+    }
+}
