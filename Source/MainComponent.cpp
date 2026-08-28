@@ -45,8 +45,14 @@ MainComponent::MainComponent()
                                CreationDock::DockTargetZone::Bottom);
 
     auto replConsole = std::make_unique<ConsolePanel>();
+    auto* replConsolePanel = replConsole.get();
     replConsole->getProjectRoot = [] { return juce::File::getCurrentWorkingDirectory(); };
-    dockManager->registerPanel("frust-repl", "FRust Terminal", std::move(replConsole),
+    replConsole->processReplCommand = [this](const juce::String& input, juce::String& output)
+    {
+        return builtInPluginHost.processReplCommand(input, output);
+    };
+    builtInPluginHost.attachReplConsole(*replConsole);
+    dockManager->registerPanel("frust-repl", "FRust Interactive", std::move(replConsole),
                                CreationDock::DockTargetZone::Bottom);
 
     auto frateTerminal = std::make_unique<FrateTerminalPanel>();
@@ -61,6 +67,10 @@ MainComponent::MainComponent()
     juce::String pluginError;
     if (! builtInPluginHost.load(pluginError))
         headerBar.setStatusText("Built-in plugin commands unavailable: " + pluginError);
+    else
+    {
+        replConsolePanel->setPluginPresentation(builtInPluginHost.getReplBanner(), builtInPluginHost.getReplPrompt());
+    }
 
     refreshSuiteCommunications();
     restoreActiveProject();

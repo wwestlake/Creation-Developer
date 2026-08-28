@@ -59,10 +59,12 @@ juce_add_gui_app(CreationDeveloperApp
 add_custom_command(TARGET CreationDeveloperApp POST_BUILD
     COMMAND ${CMAKE_COMMAND} -E make_directory "$<TARGET_FILE_DIR:CreationDeveloperApp>/plugins"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/BuiltInPlugins/SuitePluginPodCommands.frust" "$<TARGET_FILE_DIR:CreationDeveloperApp>/plugins/"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/BuiltInPlugins/FrustReplPlugin.frust" "$<TARGET_FILE_DIR:CreationDeveloperApp>/plugins/"
     COMMAND ${CMAKE_COMMAND} -E make_directory "D:/CreationSuite-Workspaces/codex-$<LOWER_CASE:$<CONFIG>>-bin"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:CreationDeveloperApp>" "D:/CreationSuite-Workspaces/codex-$<LOWER_CASE:$<CONFIG>>-bin/"
     COMMAND ${CMAKE_COMMAND} -E make_directory "D:/CreationSuite-Workspaces/codex-$<LOWER_CASE:$<CONFIG>>-bin/plugins"
     COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/BuiltInPlugins/SuitePluginPodCommands.frust" "D:/CreationSuite-Workspaces/codex-$<LOWER_CASE:$<CONFIG>>-bin/plugins/"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "${CMAKE_CURRENT_SOURCE_DIR}/BuiltInPlugins/FrustReplPlugin.frust" "D:/CreationSuite-Workspaces/codex-$<LOWER_CASE:$<CONFIG>>-bin/plugins/"
     COMMENT "Copying CreationDeveloperApp to the shared Codex bin directory"
 )
 juce_generate_juce_header(CreationDeveloperApp)
@@ -116,7 +118,7 @@ target_link_libraries(CreationDeveloperApp PRIVATE
 )
 
 install(TARGETS CreationDeveloperApp RUNTIME DESTINATION . COMPONENT CreationDeveloper)
-install(FILES BuiltInPlugins/SuitePluginPodCommands.frust DESTINATION plugins COMPONENT CreationDeveloper)
+install(FILES BuiltInPlugins/SuitePluginPodCommands.frust BuiltInPlugins/FrustReplPlugin.frust DESTINATION plugins COMPONENT CreationDeveloper)
 
 set(CPACK_PACKAGE_NAME "Creation Developer")
 set(CPACK_PACKAGE_VENDOR "LagDaemon Software")

@@ -13,9 +13,16 @@ public:
 
     void paint(juce::Graphics& g) override;
     void resized() override;
+    void visibilityChanged() override;
 
     void logMessage(const juce::String& message);
     void clearConsole();
+    void setPluginPresentation(const juce::String& banner, const juce::String& prompt);
+    juce::String evaluateForPlugin(const juce::String& source);
+    juce::String resetForPlugin();
+    juce::String saveForPlugin();
+    juce::String loadForPlugin();
+    void clearForPlugin();
 
     // F#-Interactive-style "run this into the live session" - evaluates
     // every top-level statement in `source` against the same ReplSession
@@ -30,7 +37,7 @@ public:
     // instead of some fixed app-data path. Unset (or returning an invalid
     // File) falls back to the user's documents folder.
     std::function<juce::File()> getProjectRoot;
-    std::function<bool(const juce::String& input, juce::String& output)> processHostedCommand;
+    std::function<bool(const juce::String& input, juce::String& output)> processReplCommand;
 
     // For a companion panel (e.g. ContextPanel) to read the live session's
     // bound variables - this owns the one real ReplSession instance, other
@@ -43,21 +50,23 @@ public:
 
 private:
     void evaluateInput();
+    void executeSubmittedInput(const juce::String& fullText, const juce::String& input);
     void resetSession();
     void saveSessionToFile();
     void loadSessionFromFile();
     bool keyPressed(const juce::KeyPress& key, juce::Component* source) override;
     juce::File getSessionFile() const;
 
-    juce::Label headerLabel { "Header", "Output & REPL Console" };
+    juce::Label headerLabel { "Header", "FRust Interactive" };
     juce::TextEditor consoleText;
     juce::TextButton clearButton { "Clear" };
     juce::TextButton resetButton { "Reset" };
     juce::TextButton saveButton { "Save" };
     juce::TextButton loadButton { "Load" };
 
-    static const juce::String bannerText;
-    static const juce::String promptText;
+    juce::String bannerText { "FRust Interactive\nInitializing environment...\n" };
+    juce::String promptText;
+    bool clearRequestedByPlugin = false;
 
     // In-process Frust evaluation - no subprocess, no marshalling, matching
     // the language's own "embedded dynamic code creation" design (see

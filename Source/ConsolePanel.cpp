@@ -1,8 +1,5 @@
 #include "ConsolePanel.h"
 
-const juce::String ConsolePanel::bannerText = "LagDaemon Language Research Console v0.1.0\nReady.\n";
-const juce::String ConsolePanel::promptText = "fr-> ";
-
 ConsolePanel::ConsolePanel()
     : replSession(std::make_unique<frust::ReplSession>())
 {
@@ -28,22 +25,28 @@ ConsolePanel::ConsolePanel()
     consoleText.addKeyListener(this);
     addAndMakeVisible(consoleText);
 
-    clearButton.onClick = [this] { clearConsole(); };
+    clearButton.onClick = [this] { executeSubmittedInput(consoleText.getText(), "@clear"); };
     addAndMakeVisible(clearButton);
 
-    resetButton.onClick = [this] { resetSession(); };
+    resetButton.onClick = [this] { executeSubmittedInput(consoleText.getText(), "@reset"); };
     addAndMakeVisible(resetButton);
 
-    saveButton.onClick = [this] { saveSessionToFile(); };
+    saveButton.onClick = [this] { executeSubmittedInput(consoleText.getText(), "@save"); };
     addAndMakeVisible(saveButton);
 
-    loadButton.onClick = [this] { loadSessionFromFile(); };
+    loadButton.onClick = [this] { executeSubmittedInput(consoleText.getText(), "@load"); };
     addAndMakeVisible(loadButton);
 }
 
 ConsolePanel::~ConsolePanel()
 {
     consoleText.removeKeyListener(this);
+}
+
+void ConsolePanel::visibilityChanged()
+{
+    if (isShowing())
+        consoleText.grabKeyboardFocus();
 }
 
 void ConsolePanel::paint(juce::Graphics& g)
@@ -82,32 +85,26 @@ void ConsolePanel::evaluateInput()
 
     auto input = fullText.substring(lastPromptIndex + promptText.length()).trim();
 
-    juce::String output;
-    if (input.isNotEmpty()) {
-        const auto firstToken = juce::StringArray::fromTokens(input, " \t\r\n", "");
-        const auto isSuiteCommand = ! firstToken.isEmpty()
-            && firstToken[0].equalsIgnoreCase("frate");
+    executeSubmittedInput(fullText, input);
+}
 
-        if (processHostedCommand && processHostedCommand(input, output)) {
-            consoleText.setText(fullText + "\n  => " + output + "\n" + promptText);
-            consoleText.moveCaretToEnd();
-            return;
-        }
-        if (isSuiteCommand) {
-            consoleText.setText(fullText + "\n  => The Suite frate command handler is unavailable.\n" + promptText);
-            consoleText.moveCaretToEnd();
-            return;
-        }
-        // JIT-compiling and running is fast (microseconds for expressions
-        // this small) but still real work - do it synchronously for now
-        // rather than adding a background-thread/callback path before
-        // there's evidence it's needed on the message thread.
-        auto result = replSession->evaluate(input.toStdString());
-        if (!result.empty()) output = "\n  => " + juce::String(result);
-        if (onSessionChanged) onSessionChanged();
+void ConsolePanel::executeSubmittedInput(const juce::String& fullText, const juce::String& input)
+{
+    if (input.isEmpty()) return;
+
+    juce::String output;
+    if (! processReplCommand || ! processReplCommand(input, output))
+        output = "The FRust REPL plugin is unavailable.";
+
+    if (clearRequestedByPlugin)
+    {
+        clearRequestedByPlugin = false;
+        clearConsole();
+        return;
     }
 
-    consoleText.setText(fullText + output + "\n" + promptText);
+    const auto response = output.isNotEmpty() ? "\n  => " + output : juce::String();
+    consoleText.setText(fullText + response + "\n" + promptText);
     consoleText.moveCaretToEnd();
 }
 
@@ -141,6 +138,56 @@ void ConsolePanel::resetSession()
     if (onSessionChanged) onSessionChanged();
 }
 
+void ConsolePanel::setPluginPresentation(const juce::String& banner, const juce::String& prompt)
+{
+    bannerText = banner.isNotEmpty() ? banner : bannerText;
+    promptText = prompt.isNotEmpty() ? prompt : promptText;
+    clearConsole();
+}
+
+juce::String ConsolePanel::evaluateForPlugin(const juce::String& source)
+{
+    if (source.trim().isEmpty()) return {};
+
+    const auto result = replSession->evaluate(source.toStdString());
+    if (onSessionChanged) onSessionChanged();
+    return juce::String(result);
+}
+
+juce::String ConsolePanel::resetForPlugin()
+{
+    replSession->reset();
+    if (onSessionChanged) onSessionChanged();
+    return "(session reset - all bound variables forgotten)";
+}
+
+juce::String ConsolePanel::saveForPlugin()
+{
+    auto file = getSessionFile();
+    file.getParentDirectory().createDirectory();
+    return file.replaceWithText(juce::String(replSession->exportAsJson()))
+        ? "(session saved to " + file.getFullPathName() + ")"
+        : "(failed to save session to " + file.getFullPathName() + ")";
+}
+
+juce::String ConsolePanel::loadForPlugin()
+{
+    auto file = getSessionFile();
+    if (! file.existsAsFile())
+        return "(no saved session at " + file.getFullPathName() + ")";
+
+    if (! replSession->importFromJson(file.loadFileAsString().toStdString()))
+        return "(failed to parse session file " + file.getFullPathName() + ")";
+
+    if (onSessionChanged) onSessionChanged();
+    return "(session loaded from " + file.getFullPathName() + ")";
+}
+
+void ConsolePanel::clearForPlugin()
+{
+    clearRequestedByPlugin = true;
+}
+
 juce::File ConsolePanel::getSessionFile() const
 {
     auto root = getProjectRoot ? getProjectRoot() : juce::File();
@@ -152,28 +199,12 @@ juce::File ConsolePanel::getSessionFile() const
 
 void ConsolePanel::saveSessionToFile()
 {
-    auto file = getSessionFile();
-    file.getParentDirectory().createDirectory();
-
-    if (file.replaceWithText(juce::String(replSession->exportAsJson())))
-        logMessage("(session saved to " + file.getFullPathName() + ")");
-    else
-        logMessage("(failed to save session to " + file.getFullPathName() + ")");
+    logMessage(saveForPlugin());
 }
 
 void ConsolePanel::loadSessionFromFile()
 {
-    auto file = getSessionFile();
-    if (!file.existsAsFile()) {
-        logMessage("(no saved session at " + file.getFullPathName() + ")");
-        return;
-    }
-
-    if (replSession->importFromJson(file.loadFileAsString().toStdString())) {
-        logMessage("(session loaded from " + file.getFullPathName() + ")");
-        if (onSessionChanged) onSessionChanged();
-    } else
-        logMessage("(failed to parse session file " + file.getFullPathName() + ")");
+    logMessage(loadForPlugin());
 }
 
 void ConsolePanel::logMessage(const juce::String& message)
