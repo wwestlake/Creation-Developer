@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.22)
 
-set(CREATION_DEVELOPER_VERSION "0.1.0" CACHE STRING "Creation Developer product version")
+set(CREATION_DEVELOPER_VERSION "0.1.0" CACHE STRING "Djehuti Developer product version")
 project(CreationDeveloper VERSION ${CREATION_DEVELOPER_VERSION} LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
@@ -8,7 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(NOT DEFINED JUCE_DIR)
-    message(FATAL_ERROR "Set JUCE_DIR to the JUCE root before configuring Creation Developer.")
+    message(FATAL_ERROR "Set JUCE_DIR to the JUCE root before configuring Djehuti Developer.")
 endif()
 
 if(MSVC)
@@ -16,7 +16,7 @@ if(MSVC)
     string(APPEND CMAKE_EXE_LINKER_FLAGS_RELEASE " /DEBUG /OPT:REF /OPT:ICF")
 endif()
 
-set(CREATION_SUITE_SHARED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../shared" CACHE PATH "Path to the Creation Suite shared code root")
+set(CREATION_SUITE_SHARED_DIR "${CMAKE_CURRENT_SOURCE_DIR}/../../shared" CACHE PATH "Path to the Djehuti Suite shared code root")
 set(FRUST_SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/third_party/FrustLang" CACHE PATH "Path to the FRust compiler source")
 
 add_subdirectory("${JUCE_DIR}" juce)
@@ -50,7 +50,7 @@ if(MSVC)
 endif()
 
 juce_add_gui_app(CreationDeveloperApp
-    PRODUCT_NAME "Creation Developer"
+    PRODUCT_NAME "Djehuti Developer"
     COMPANY_NAME "LagDaemon Software"
     BUNDLE_ID "com.lagdaemon.creationdeveloper"
     VERSION "${CREATION_DEVELOPER_VERSION}"
@@ -120,9 +120,9 @@ target_link_libraries(CreationDeveloperApp PRIVATE
 install(TARGETS CreationDeveloperApp RUNTIME DESTINATION . COMPONENT CreationDeveloper)
 install(FILES BuiltInPlugins/SuitePluginPodCommands.frust BuiltInPlugins/FrustReplPlugin.frust DESTINATION plugins COMPONENT CreationDeveloper)
 
-set(CPACK_PACKAGE_NAME "Creation Developer")
+set(CPACK_PACKAGE_NAME "Djehuti Developer")
 set(CPACK_PACKAGE_VENDOR "LagDaemon Software")
 set(CPACK_PACKAGE_VERSION "${CREATION_DEVELOPER_VERSION}")
-set(CPACK_PACKAGE_INSTALL_DIRECTORY "Creation Developer")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "Djehuti Developer")
 set(CPACK_GENERATOR "ZIP")
 include(CPack)

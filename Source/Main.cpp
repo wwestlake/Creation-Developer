@@ -5,7 +5,7 @@
 class CreationDeveloperApplication final : public juce::JUCEApplication
 {
 public:
-    const juce::String getApplicationName() override { return "Creation Developer"; }
+    const juce::String getApplicationName() override { return "Djehuti Developer"; }
     const juce::String getApplicationVersion() override { return "0.1.0"; }
     bool moreThanOneInstanceAllowed() override { return true; }
 
@@ -29,7 +29,7 @@ private:
     {
     public:
         MainWindow()
-            : juce::DocumentWindow("Creation Developer",
+            : juce::DocumentWindow("Djehuti Developer",
                                    juce::Colour(0xff111817),
                                    juce::DocumentWindow::allButtons)
         {
