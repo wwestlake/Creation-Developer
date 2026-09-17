@@ -25,7 +25,7 @@ MainComponent::MainComponent()
     dockManager->registerPanel(
         "suite-plugin-host",
         "Suite Plugin Host",
-        makeSummaryPanel("Creation Developer is a first-order Suite plugin host.\n\n"
+        makeSummaryPanel("Djehuti Developer is a first-order Suite plugin host.\n\n"
                          "Next: consume the shared, versioned plugin-host SDK and expose extension points for panels, commands, templates, generators, formatters, and language tools."),
         CreationDock::DockTargetZone::Left);
 
@@ -81,7 +81,7 @@ MainComponent::~MainComponent() = default;
 
 void MainComponent::configureHeader()
 {
-    headerBar.setAppTitle("Creation Developer");
+    headerBar.setAppTitle("Djehuti Developer");
     headerBar.setAppLogo(creation::ui::SuiteLogoId::suite);
     headerBar.setProjectLabel("Project: None");
     headerBar.setTransportControlsVisible(false);
@@ -90,7 +90,7 @@ void MainComponent::configureHeader()
     headerBar.onAudioRequested = [this] { refreshSuiteCommunications(); };
     headerBar.onTourRequested = [this] { suiteShellController.showSuiteEula(); };
     suiteShellController.attach(headerBar,
-                                { "Creation Developer", creation::assets::SuiteAppDomain::developer,
+                                { "Djehuti Developer", creation::assets::SuiteAppDomain::developer,
                                   creation_developer::branding::backgroundColour() },
                                 [this](const juce::String& status) { headerBar.setStatusText(status); });
     suiteShellController.onProjectOpenRequested = [this](const juce::String& projectId)
@@ -142,7 +142,7 @@ void MainComponent::refreshSuiteCommunications()
     summary << "Resolved provider: " << runtime.providerDisplayName << "\n";
     summary << "Resolved model: " << runtime.modelName << "\n";
     summary << "Suite VFS root: " << suiteSettings.suiteVfsRoot << "\n\n";
-    summary << "Creation Developer uses the Suite's configured BYOK accounts and communications services. No separate provider or credential store is created here.";
+    summary << "Djehuti Developer uses the Suite's configured BYOK accounts and communications services. No separate provider or credential store is created here.";
     if (communicationsSummary != nullptr)
         communicationsSummary->setText(summary, juce::dontSendNotification);
 
