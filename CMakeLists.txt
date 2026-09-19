@@ -50,7 +50,7 @@ if(MSVC)
 endif()
 
 juce_add_gui_app(CreationDeveloperApp
-    PRODUCT_NAME "Djehuti Developer"
+    PRODUCT_NAME "DjehutiDeveloper"
     COMPANY_NAME "LagDaemon Software"
     BUNDLE_ID "com.lagdaemon.creationdeveloper"
     VERSION "${CREATION_DEVELOPER_VERSION}"
@@ -120,9 +120,18 @@ target_link_libraries(CreationDeveloperApp PRIVATE
 install(TARGETS CreationDeveloperApp RUNTIME DESTINATION . COMPONENT CreationDeveloper)
 install(FILES BuiltInPlugins/SuitePluginPodCommands.frust BuiltInPlugins/FrustReplPlugin.frust DESTINATION plugins COMPONENT CreationDeveloper)
 
-set(CPACK_PACKAGE_NAME "Djehuti Developer")
+set(CPACK_PACKAGE_NAME "DjehutiDeveloper")
 set(CPACK_PACKAGE_VENDOR "LagDaemon Software")
 set(CPACK_PACKAGE_VERSION "${CREATION_DEVELOPER_VERSION}")
-set(CPACK_PACKAGE_INSTALL_DIRECTORY "Djehuti Developer")
+set(CPACK_PACKAGE_INSTALL_DIRECTORY "DjehutiDeveloper")
 set(CPACK_GENERATOR "ZIP")
 include(CPack)
+
+add_custom_command(TARGET CreationDeveloperApp POST_BUILD
+    COMMAND ${CMAKE_COMMAND} -E make_directory "D:/CreationSuite-Workspaces/gemini-$<LOWER_CASE:$<CONFIG>>-bin"
+    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:CreationDeveloperApp>" "D:/CreationSuite-Workspaces/gemini-$<LOWER_CASE:$<CONFIG>>-bin/"
+    COMMENT "Copying CreationDeveloperApp to the shared gemini bin directory"
+)
+
+# Auto-generated output name overrides
+set_target_properties(CreationDeveloperApp PROPERTIES OUTPUT_NAME "DjehutiDeveloperApp")

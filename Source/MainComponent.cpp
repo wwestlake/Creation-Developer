@@ -181,7 +181,7 @@ void MainComponent::paint(juce::Graphics& g)
 void MainComponent::resized()
 {
     auto contentArea = getLocalBounds();
-    headerBar.setBounds(contentArea.removeFromTop(96));
+    headerBar.setBounds(contentArea.removeFromTop(CreationSuiteHeaderBar::preferredHeight));
     if (dockManager != nullptr)
         dockManager->setBounds(contentArea.reduced(18));
 }
